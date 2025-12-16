@@ -4,7 +4,7 @@ services:
   snake-game:
     build: .
     ports:
-      - "3000:3000"
+      - "3020:3020"
     volumes:
       - .:/app
     # Enable hot reload/watch mode if desired, but default command is fine for now

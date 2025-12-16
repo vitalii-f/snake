@@ -37,7 +37,7 @@ function resetPlayer(player: Player) {
 }
 
 const server = Bun.serve({
-    port: 3000,
+    port: 3020,
     fetch(req, server) {
         // Upgrade to WebSocket
         if (server.upgrade(req)) {

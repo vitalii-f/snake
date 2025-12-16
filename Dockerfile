@@ -11,7 +11,7 @@ COPY style.css .
 COPY script.js .
 
 # Expose port
-EXPOSE 3000
+EXPOSE 3020
 
 # Start server
 CMD ["bun", "run", "server/index.ts"]
