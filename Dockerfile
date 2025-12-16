@@ -2,13 +2,18 @@ FROM oven/bun:latest
 
 WORKDIR /app
 
+# Copy package files
+COPY package.json .
+COPY bun.lock .
+
+# Install dependencies
+RUN bun install
+
 # Copy server code
 COPY server ./server
 
 # Copy client static files
-COPY index.html .
-COPY style.css .
-COPY script.js .
+COPY public ./public
 
 # Expose port
 EXPOSE 3020

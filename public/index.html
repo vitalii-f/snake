@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Snake</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="main-menu-wrapper">
+        <h1 class="game-title">NEON SNAKE</h1>
+
+        <div class="menu-container">
+            <div class="input-group">
+                <input type="text" id="nickname-input" placeholder="Enter Nickname" maxlength="10">
+            </div>
+
+            <button id="start-btn" class="menu-btn primary">START GAME</button>
+
+            <div class="secondary-buttons">
+                <button class="menu-btn disabled">PROFILE</button>
+                <button class="menu-btn disabled">SETTINGS</button>
+                <button class="menu-btn disabled">BATTLEPASS</button>
+            </div>
+        </div>
+        <div class="version-label">v0.0.1</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const nicknameInput = document.getElementById('nickname-input');
+            const startBtn = document.getElementById('start-btn');
+
+            // Load saved nickname
+            const savedNickname = localStorage.getItem('snake_nickname');
+            if (savedNickname) {
+                nicknameInput.value = savedNickname;
+            }
+
+            function startGame() {
+                const nickname = nicknameInput.value.trim();
+                if (!nickname) {
+                    alert('Please enter a nickname');
+                    return;
+                }
+                localStorage.setItem('snake_nickname', nickname);
+                window.location.href = '/game';
+            }
+
+            startBtn.addEventListener('click', startGame);
+
+            nicknameInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') startGame();
+            });
+        });
+    </script>
+    <script src="script.js"></script>
+</body>
+
+</html>

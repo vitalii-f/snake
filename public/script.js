@@ -46,25 +46,39 @@ ws.onmessage = (event) => {
     updateLeaderboard();
 };
 
-const nicknameInput = document.getElementById('nickname-input');
-const joinBtn = document.getElementById('join-btn');
+const nicknameInput = document.getElementById('nickname-input'); // Likely null on game page, check existence
+const joinBtn = document.getElementById('join-btn'); // Likely null
 const leaderboardList = document.getElementById('leaderboard-list');
+const exitBtn = document.getElementById('exit-btn');
+
+if (exitBtn) {
+    exitBtn.addEventListener('click', () => {
+        window.location.href = '/';
+    });
+}
 
 let isGameActive = false;
 
-joinBtn.addEventListener('click', joinGame);
-nicknameInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') joinGame();
-});
+// Auto-join if on game page
+const savedNickname = localStorage.getItem('snake_nickname');
+if (!savedNickname) {
+    // Redirect to menu if no nickname
+    window.location.href = '/';
+}
 
-function joinGame() {
-    const nickname = nicknameInput.value.trim() || 'Guest';
-    if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'join', name: nickname }));
-        startScreen.classList.remove('active');
+ws.onopen = () => {
+    if (savedNickname) {
+        ws.send(JSON.stringify({ type: 'join', name: savedNickname }));
         isGameActive = true;
     }
-}
+};
+
+// joinBtn.addEventListener('click', joinGame); // Removed
+// nicknameInput.addEventListener('keydown', (e) => { // Removed
+//     if (e.key === 'Enter') joinGame();
+// });
+
+// function joinGame() { ... } // Removed
 
 function updateLeaderboard() {
     // Sort players by score

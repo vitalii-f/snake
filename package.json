@@ -1,0 +1,14 @@
+{
+  "name": "snake",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "^1.3.4"
+  },
+  "scripts": {
+    "start": "bun run server/index.ts",
+    "server": "bun run server/index.ts"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

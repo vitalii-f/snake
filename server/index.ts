@@ -42,79 +42,88 @@ import path from 'path';
 // If script is in /server/index.ts, root is ../
 const PROJECT_ROOT = path.resolve(import.meta.dir, '..');
 
-const server = Bun.serve({
-    port: 3020,
-    fetch(req, server) {
-        // Upgrade to WebSocket
-        if (server.upgrade(req)) {
-            return;
-        }
 
-        const url = new URL(req.url);
-        let filePath = '';
-
-        // Router
-        if (url.pathname === '/') filePath = 'index.html';
-        else if (url.pathname === '/style.css') filePath = 'style.css';
-        else if (url.pathname === '/script.js') filePath = 'script.js';
-        else return new Response("Not Found", { status: 404 });
-
-        // Serve file from Project Root
-        const file = Bun.file(path.join(PROJECT_ROOT, filePath));
-        return new Response(file);
-    },
-    websocket: {
-        open(ws) {
-            const id = crypto.randomUUID();
-            const color = getRandomColor();
-
-            const player: Player = {
-                id,
-                body: [{ x: 5, y: 5 }], // Initial position
-                velocity: { x: 0, y: 0 },
-                color,
-                score: 0,
-                name: 'Guest'
-            };
-
-            resetPlayer(player);
-
-            players.set(id, player);
-            ws.data = { id };
-
-            ws.subscribe("game");
-            console.log(`Player connected: ${id}`);
-        },
-        message(ws, message) {
-            const id = (ws.data as any).id;
-            const player = players.get(id);
-            if (!player) return;
-
-            const data = JSON.parse(message as string);
-
-            if (data.type === 'join') {
-                player.name = data.name || 'Guest';
+let server;
+try {
+    server = Bun.serve({
+        port: 3020,
+        fetch(req, server) {
+            // Upgrade to WebSocket
+            if (server.upgrade(req)) {
                 return;
             }
 
-            if (data.type === 'move') {
-                const { x, y } = data.direction;
-                // Prevent 180 turn
-                if (player.velocity.x + x === 0 && player.velocity.y + y === 0 && player.body.length > 1) {
+            const url = new URL(req.url);
+            let filePath = url.pathname;
+
+            // Simple router mapping
+            if (filePath === '/') filePath = '/index.html';
+            else if (filePath === '/game') filePath = '/game.html';
+
+            // Serve from public directory
+            const publicDir = path.join(PROJECT_ROOT, 'public');
+            const file = Bun.file(path.join(publicDir, filePath));
+
+            // If file doesn't exist (e.g. dev mode without build), return 404 or specific message
+            // But usually in dev mode we hit Vite server, not this one for static files.
+            return new Response(file);
+        },
+        websocket: {
+            open(ws) {
+                const id = crypto.randomUUID();
+                const color = getRandomColor();
+
+                const player: Player = {
+                    id,
+                    body: [{ x: 5, y: 5 }], // Initial position
+                    velocity: { x: 0, y: 0 },
+                    color,
+                    score: 0,
+                    name: 'Guest'
+                };
+
+                resetPlayer(player);
+
+                players.set(id, player);
+                ws.data = { id };
+
+                ws.subscribe("game");
+                console.log(`Player connected: ${id}`);
+            },
+            message(ws, message) {
+                const id = (ws.data as any).id;
+                const player = players.get(id);
+                if (!player) return;
+
+                const data = JSON.parse(message as string);
+
+                if (data.type === 'join') {
+                    player.name = data.name || 'Guest';
                     return;
                 }
-                player.velocity = { x, y };
-            }
-        },
-        close(ws) {
-            const id = (ws.data as any).id;
-            players.delete(id);
-            console.log(`Player disconnected: ${id}`);
-        }
-    }
-});
 
-console.log(`Listening on localhost:${server.port}`);
+                if (data.type === 'move') {
+                    const { x, y } = data.direction;
+                    // Prevent 180 turn
+                    if (player.velocity.x + x === 0 && player.velocity.y + y === 0 && player.body.length > 1) {
+                        return;
+                    }
+                    player.velocity = { x, y };
+                }
+            },
+            close(ws) {
+                const id = (ws.data as any).id;
+                players.delete(id);
+                console.log(`Player disconnected: ${id}`);
+            }
+        }
+    });
+
+    console.log(`Listening on localhost:${server.port}`);
+} catch (e) {
+    console.error("FAILED TO START SERVER:", e);
+    process.exit(1);
+}
 
 // Game Loop
 setInterval(() => {

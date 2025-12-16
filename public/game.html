@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Snake</title>
+    <title>Neon Snake - Game</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 </head>
@@ -14,6 +14,7 @@
         <div class="leaderboard">
             <h3>LEADERBOARD</h3>
             <div id="leaderboard-list"></div>
+            <button id="exit-btn" class="menu-btn exit-game-btn">EXIT TO MENU</button>
         </div>
 
         <div class="center-column">
@@ -24,13 +25,6 @@
             </div>
             <div class="game-container">
                 <div class="ui-layer">
-                    <div id="start-screen" class="screen active">
-                        <h1>NEON SNAKE</h1>
-                        <div class="login-form">
-                            <input type="text" id="nickname-input" placeholder="Enter Nickname" maxlength="10">
-                            <button id="join-btn">JOIN GAME</button>
-                        </div>
-                    </div>
                     <div id="game-over-screen" class="screen">
                         <h1>GAME OVER</h1>
                         <p>Final Score: <span id="final-score">0</span></p>
