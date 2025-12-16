@@ -50,13 +50,21 @@ const nicknameInput = document.getElementById('nickname-input');
 const joinBtn = document.getElementById('join-btn');
 const leaderboardList = document.getElementById('leaderboard-list');
 
-joinBtn.addEventListener('click', () => {
+let isGameActive = false;
+
+joinBtn.addEventListener('click', joinGame);
+nicknameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') joinGame();
+});
+
+function joinGame() {
     const nickname = nicknameInput.value.trim() || 'Guest';
     if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'join', name: nickname }));
         startScreen.classList.remove('active');
+        isGameActive = true;
     }
-});
+}
 
 function updateLeaderboard() {
     // Sort players by score
@@ -71,12 +79,14 @@ function updateLeaderboard() {
 }
 
 function sendDirection(x, y) {
-    if (ws.readyState === WebSocket.OPEN) {
+    if (ws.readyState === WebSocket.OPEN && isGameActive) {
         ws.send(JSON.stringify({ type: 'move', direction: { x, y } }));
     }
 }
 
 document.addEventListener('keydown', (e) => {
+    if (!isGameActive) return;
+
     switch (e.key) {
         case 'ArrowUp':
         case 'w':
