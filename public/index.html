@@ -22,42 +22,79 @@
 
             <div class="secondary-buttons">
                 <button class="menu-btn disabled">PROFILE</button>
-                <button class="menu-btn disabled">SETTINGS</button>
+                <button id="open-settings-btn" class="menu-btn">SETTINGS</button>
                 <button class="menu-btn disabled">BATTLEPASS</button>
             </div>
         </div>
         <div class="version-label">v0.0.1</div>
-    </div>
+        <div id="settings-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>SETTINGS</h2>
+                <div class="setting-item">
+                    <input type="checkbox" id="show-ping" />
+                    <label for="show-ping">Show Ping</label>
+                </div>
+                <div class="setting-item">
+                    <input type="checkbox" id="show-fps" />
+                    <label for="show-fps">Show FPS</label>
+                </div>
+                <button id="close-settings-btn" class="menu-btn primary">SAVE & CLOSE</button>
+            </div>
+        </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const nicknameInput = document.getElementById('nickname-input');
-            const startBtn = document.getElementById('start-btn');
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const openSettingsBtn = document.getElementById('open-settings-btn');
+                const closeSettingsBtn = document.getElementById('close-settings-btn');
+                const settingsModal = document.getElementById('settings-modal');
+                const showPingCheckbox = document.getElementById('show-ping');
+                const showFpsCheckbox = document.getElementById('show-fps');
 
-            // Load saved nickname
-            const savedNickname = localStorage.getItem('snake_nickname');
-            if (savedNickname) {
-                nicknameInput.value = savedNickname;
-            }
+                // Load settings
+                showPingCheckbox.checked = localStorage.getItem('snake_show_ping') === 'true';
+                showFpsCheckbox.checked = localStorage.getItem('snake_show_fps') === 'true';
 
-            function startGame() {
-                const nickname = nicknameInput.value.trim();
-                if (!nickname) {
-                    alert('Please enter a nickname');
-                    return;
+                if (openSettingsBtn) {
+                    openSettingsBtn.addEventListener('click', () => {
+                        settingsModal.classList.remove('hidden');
+                    });
                 }
-                localStorage.setItem('snake_nickname', nickname);
-                window.location.href = '/game';
-            }
 
-            startBtn.addEventListener('click', startGame);
+                if (closeSettingsBtn) {
+                    closeSettingsBtn.addEventListener('click', () => {
+                        localStorage.setItem('snake_show_ping', showPingCheckbox.checked);
+                        localStorage.setItem('snake_show_fps', showFpsCheckbox.checked);
+                        settingsModal.classList.add('hidden');
+                    });
+                }
 
-            nicknameInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') startGame();
+                const nicknameInput = document.getElementById('nickname-input');
+                const startBtn = document.getElementById('start-btn');
+
+                // Load saved nickname
+                const savedNickname = localStorage.getItem('snake_nickname');
+                if (savedNickname) {
+                    nicknameInput.value = savedNickname;
+                }
+
+                function startGame() {
+                    const nickname = nicknameInput.value.trim();
+                    if (!nickname) {
+                        alert('Please enter a nickname');
+                        return;
+                    }
+                    localStorage.setItem('snake_nickname', nickname);
+                    window.location.href = '/game';
+                }
+
+                startBtn.addEventListener('click', startGame);
+
+                nicknameInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') startGame();
+                });
             });
-        });
-    </script>
-    <script src="script.js"></script>
+        </script>
+        <script src="script.js"></script>
 </body>
 
 </html>

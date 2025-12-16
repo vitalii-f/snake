@@ -36,14 +36,71 @@ ws.onclose = () => {
     // statusElement.style.color = '#ff0055';
 };
 
-ws.onmessage = (event) => {
-    const state = JSON.parse(event.data);
-    players = state.players;
-    food = state.food;
+// Simple update loop
+draw();
+updateLeaderboard();
+};
 
-    // Simple update loop
-    draw();
-    updateLeaderboard();
+const pingDisplay = document.getElementById('ping-display');
+const fpsDisplay = document.getElementById('fps-display');
+const showPing = localStorage.getItem('snake_show_ping') === 'true';
+const showFps = localStorage.getItem('snake_show_fps') === 'true';
+
+if (showPing) pingDisplay.classList.remove('hidden');
+if (showFps) fpsDisplay.classList.remove('hidden');
+
+// FPS Counter
+let frameCount = 0;
+let lastFpsTime = Date.now();
+let fps = 0;
+
+if (showFps) {
+    setInterval(() => {
+        fps = frameCount;
+        frameCount = 0;
+        fpsDisplay.textContent = `FPS: ${fps}`;
+    }, 1000);
+}
+
+// Ping Logic
+if (showPing) {
+    setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+            const start = Date.now();
+            ws.send(JSON.stringify({ type: 'ping', timestamp: start }));
+        }
+    }, 2000);
+}
+
+// Handle Pong in message handler is tricky because we overwrite ws.onmessage.
+// Better to attach a new listener or modify existing.
+// Let's modify the existing onmessage handler above.
+
+ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+
+    if (data.type === 'pong') {
+        const latency = Date.now() - data.timestamp;
+        pingDisplay.textContent = `Ping: ${latency} ms`;
+        return;
+    }
+
+    // Normal game state
+    const state = data; // Actually data IS state if not pong? Wait, checks below.
+    // The server sends { type: 'game', ... } or just state? 
+    // Looking at server code: server.publish("game", JSON.stringify(state));
+    // So message is just state object.
+    // We need to change server to send { type: 'pong' } differently OR wrap game state in type.
+    // Currently server sends raw object: { players: ..., food: ... }
+
+    // We should assume if data has 'players' it is game state.
+    if (data.players) {
+        players = data.players;
+        food = data.food;
+        draw();
+        updateLeaderboard();
+        frameCount++; // Count frame
+    }
 };
 
 const nicknameInput = document.getElementById('nickname-input'); // Likely null on game page, check existence
@@ -101,25 +158,21 @@ function sendDirection(x, y) {
 document.addEventListener('keydown', (e) => {
     if (!isGameActive) return;
 
-    switch (e.key) {
+    switch (e.code) {
         case 'ArrowUp':
-        case 'w':
-        case 'W':
+        case 'KeyW':
             sendDirection(0, -1);
             break;
         case 'ArrowDown':
-        case 's':
-        case 'S':
+        case 'KeyS':
             sendDirection(0, 1);
             break;
         case 'ArrowLeft':
-        case 'a':
-        case 'A':
+        case 'KeyA':
             sendDirection(-1, 0);
             break;
         case 'ArrowRight':
-        case 'd':
-        case 'D':
+        case 'KeyD':
             sendDirection(1, 0);
             break;
     }

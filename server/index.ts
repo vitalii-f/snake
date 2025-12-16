@@ -110,6 +110,10 @@ try {
                     }
                     player.velocity = { x, y };
                 }
+
+                if (data.type === 'ping') {
+                    ws.send(JSON.stringify({ type: 'pong', timestamp: data.timestamp }));
+                }
             },
             close(ws) {
                 const id = (ws.data as any).id;
