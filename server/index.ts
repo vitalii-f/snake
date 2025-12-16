@@ -74,7 +74,7 @@ const server = Bun.serve({
                 velocity: { x: 0, y: 0 },
                 color,
                 score: 0,
-                name: `Player ${players.size + 1}`
+                name: 'Guest'
             };
 
             resetPlayer(player);
@@ -91,6 +91,11 @@ const server = Bun.serve({
             if (!player) return;
 
             const data = JSON.parse(message as string);
+
+            if (data.type === 'join') {
+                player.name = data.name || 'Guest';
+                return;
+            }
 
             if (data.type === 'move') {
                 const { x, y } = data.direction;

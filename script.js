@@ -27,14 +27,13 @@ let food = { x: -1, y: -1 };
 let myId = null;
 
 ws.onopen = () => {
-    statusElement.textContent = 'Connected to Server';
-    statusElement.style.color = '#00ff9d';
-    startScreen.classList.add('hidden'); // Hide start screen on connect
+    // statusElement.textContent = 'Connected to Server';
+    // statusElement.style.color = '#00ff9d';
 };
 
 ws.onclose = () => {
-    statusElement.textContent = 'Disconnected';
-    statusElement.style.color = '#ff0055';
+    // statusElement.textContent = 'Disconnected';
+    // statusElement.style.color = '#ff0055';
 };
 
 ws.onmessage = (event) => {
@@ -44,8 +43,32 @@ ws.onmessage = (event) => {
 
     // Simple update loop
     draw();
-    updateScore();
+    updateLeaderboard();
 };
+
+const nicknameInput = document.getElementById('nickname-input');
+const joinBtn = document.getElementById('join-btn');
+const leaderboardList = document.getElementById('leaderboard-list');
+
+joinBtn.addEventListener('click', () => {
+    const nickname = nicknameInput.value.trim() || 'Guest';
+    if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'join', name: nickname }));
+        startScreen.classList.add('hidden');
+    }
+});
+
+function updateLeaderboard() {
+    // Sort players by score
+    const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+
+    leaderboardList.innerHTML = sortedPlayers.map(p => `
+        <div class="leaderboard-item">
+            <span class="leaderboard-name" style="color: ${p.color}">${p.name}</span>
+            <span class="leaderboard-score">${p.score}</span>
+        </div>
+    `).join('');
+}
 
 function sendDirection(x, y) {
     if (ws.readyState === WebSocket.OPEN) {

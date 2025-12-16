@@ -20,16 +20,22 @@
             <div class="ui-layer">
                 <div id="start-screen" class="screen">
                     <h1>NEON SNAKE</h1>
-                    <h2 style="color: var(--accent); margin-bottom: 20px;">MULTIPLAYER</h2>
-                    <p>Connecting to Server...</p>
+                    <div class="login-form">
+                        <input type="text" id="nickname-input" placeholder="Enter Nickname" maxlength="10">
+                        <button id="join-btn">JOIN GAME</button>
+                    </div>
                 </div>
                 <div id="game-over-screen" class="screen">
                     <h1>GAME OVER</h1>
                     <p>Final Score: <span id="final-score">0</span></p>
-                    <p>Press <span class="key-highlight">SPACE</span> to Restart</p>
+                    <p>Press <span class="key-highlight">SPACE</span> to Respawn</p>
                 </div>
             </div>
             <canvas id="game-canvas"></canvas>
+            <div class="leaderboard">
+                <h3>LEADERBOARD</h3>
+                <div id="leaderboard-list"></div>
+            </div>
         </div>
     </div>
     <script src="script.js"></script>
