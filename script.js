@@ -54,7 +54,7 @@ joinBtn.addEventListener('click', () => {
     const nickname = nicknameInput.value.trim() || 'Guest';
     if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'join', name: nickname }));
-        startScreen.classList.add('hidden');
+        startScreen.classList.remove('active');
     }
 });
 
