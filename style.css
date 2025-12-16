@@ -105,6 +105,7 @@ canvas {
     left: 0;
     width: 100%;
     height: 100%;
+    z-index: 50;
     pointer-events: none;
     display: flex;
     flex-direction: column;
@@ -254,8 +255,8 @@ body::after {
 }
 
 #nickname-input {
-    background: transparent;
-    border: 2px solid var(--grid-color);
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid var(--accent);
     color: white;
     padding: 10px;
     font-family: 'Orbitron', monospace;
@@ -263,6 +264,12 @@ body::after {
     text-align: center;
     outline: none;
     transition: all 0.3s ease;
+    cursor: text;
+    width: 250px;
+}
+
+#nickname-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
 }
 
 #nickname-input:focus {
