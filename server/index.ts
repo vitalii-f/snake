@@ -183,4 +183,4 @@ setInterval(() => {
 
     server.publish("game", JSON.stringify(state));
 
-}, 100); // 10 FPS for network game
+}, 50); // 20 TPS (Ticks Per Second) for faster gameplay
