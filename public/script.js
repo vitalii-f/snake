@@ -39,7 +39,6 @@ ws.onclose = () => {
 // Simple update loop
 draw();
 updateLeaderboard();
-};
 
 const pingDisplay = document.getElementById('ping-display');
 const fpsDisplay = document.getElementById('fps-display');
