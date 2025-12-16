@@ -44,27 +44,51 @@ body {
     position: relative;
 }
 
+.left-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding-top: 50px;
+    /* Align with score board approximately */
+    position: relative;
+    /* For absolute tree positioning */
+}
+
 #christmas-tree {
     font-size: 5rem;
     line-height: 1;
     filter: drop-shadow(0 0 20px gold);
     animation: pulse 2s infinite;
+
+    /* Absolute positioning to prevent layout shift */
+    position: absolute;
+    top: -80px;
+    /* Float above the column */
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 50;
+    text-shadow: 0 0 20px gold;
+    opacity: 0;
+    transition: all 0.5s ease-out;
+    margin-bottom: 0;
 }
 
-#christmas-tree.hidden {
-    display: none;
+#christmas-tree:not(.hidden) {
+    opacity: 1;
 }
 
 @keyframes pulse {
 
     0%,
     100% {
-        transform: scale(1);
+        transform: translateX(-50%) scale(1);
         filter: drop-shadow(0 0 20px gold);
     }
 
     50% {
-        transform: scale(1.1);
+        transform: translateX(-50%) scale(1.1);
         filter: drop-shadow(0 0 40px gold);
     }
 }

@@ -85,6 +85,19 @@ ws.onmessage = (event) => {
         return;
     }
 
+    if (data.type === 'christmas_miracle') {
+        // Trigger snow and tree
+        const tree = document.getElementById('christmas-tree');
+        if (tree) {
+            tree.classList.remove('hidden');
+            tree.style.opacity = '1';
+            tree.style.transform = 'scale(1.2) rotate(5deg)';
+            setTimeout(() => { tree.style.transform = 'scale(1) rotate(0deg)'; }, 300);
+        }
+        createSnow();
+        return;
+    }
+
     // Normal game state
     // We should assume if data has 'players' it is game state.
     if (data.players) {
@@ -246,4 +259,31 @@ function draw() {
             ctx.shadowBlur = 0;
         });
     });
+}
+
+function createSnow() {
+    const snowContainer = document.createElement('div');
+    snowContainer.id = 'snow-container';
+    snowContainer.style.position = 'fixed';
+    snowContainer.style.top = '0';
+    snowContainer.style.left = '0';
+    snowContainer.style.width = '100%';
+    snowContainer.style.height = '100%';
+    snowContainer.style.pointerEvents = 'none';
+    snowContainer.style.zIndex = '999';
+    document.body.appendChild(snowContainer);
+
+    for (let i = 0; i < 50; i++) {
+        const snowflake = document.createElement('div');
+        snowflake.textContent = '❄';
+        snowflake.style.position = 'absolute';
+        snowflake.style.color = 'white';
+        snowflake.style.opacity = Math.random();
+        snowflake.style.fontSize = Math.random() * 20 + 10 + 'px';
+        snowflake.style.left = Math.random() * 100 + 'vw';
+        snowflake.style.animation = `fall ${Math.random() * 3 + 2}s linear infinite`;
+        snowflake.style.animationDelay = Math.random() * 5 + 's';
+
+        snowContainer.appendChild(snowflake);
+    }
 }

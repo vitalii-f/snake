@@ -10,6 +10,7 @@ type Player = {
     score: number;
     name: string;
     lastMoveTime: number;
+    streak: number;
 };
 const MOVE_INTERVAL = 100; // Snake moves every 100ms (10 moves/sec)
 
@@ -24,10 +25,24 @@ function getRandomColor() {
 }
 
 function spawnFood() {
-    food = {
-        x: Math.floor(Math.random() * TILE_COUNT),
-        y: Math.floor(Math.random() * TILE_COUNT)
-    };
+    let valid = false;
+    while (!valid) {
+        food = {
+            x: Math.floor(Math.random() * TILE_COUNT),
+            y: Math.floor(Math.random() * TILE_COUNT)
+        };
+
+        valid = true;
+        for (const player of players.values()) {
+            for (const segment of player.body) {
+                if (food.x === segment.x && food.y === segment.y) {
+                    valid = false;
+                    break;
+                }
+            }
+            if (!valid) break;
+        }
+    }
 }
 
 function resetPlayer(player: Player) {
@@ -36,7 +51,9 @@ function resetPlayer(player: Player) {
     ];
     player.velocity = { x: 0, y: 0 };
     player.score = 0;
+    player.score = 0;
     player.lastMoveTime = Date.now(); // Reset move timer
+    player.streak = 0;
 }
 
 import path from 'path';
@@ -83,7 +100,8 @@ try {
                     color,
                     score: 0,
                     name: 'Guest',
-                    lastMoveTime: Date.now()
+                    lastMoveTime: Date.now(),
+                    streak: 0
                 };
 
                 resetPlayer(player);
@@ -179,6 +197,18 @@ setInterval(() => {
         // Check Food
         if (head.x === food.x && head.y === food.y) {
             player.score += 10;
+            player.streak = (player.streak || 0) + 1;
+
+            if (player.streak === 5) {
+                // Determine if we should broadcast to everyone or just the player? 
+                // "Christmas miracle" sounds like a global or local effect? 
+                // Let's send to everyone so they see the miracle.
+                // Or maybe just the player? User said "when I eat 5 apples". 
+                // Let's send to all clients to trigger the visual (maybe global snow is cooler).
+                const miracle = { type: 'christmas_miracle', playerId: player.id };
+                server.publish("game", JSON.stringify(miracle));
+            }
+
             spawnFood();
             // Don't pop tail -> grow
         } else {
