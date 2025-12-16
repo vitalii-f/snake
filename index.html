@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Snake</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="main-wrapper">
+        <div id="christmas-tree" class="hidden">🎄</div>
+        <div class="score-board">
+            <div class="score-item">SCORE: <span id="score">0</span></div>
+            <div class="score-item">HIGH SCORE: <span id="high-score">0</span></div>
+        </div>
+        <div class="game-container">
+            <div class="ui-layer">
+                <div id="start-screen" class="screen">
+                    <h1>NEON SNAKE</h1>
+                    <h2 style="color: var(--accent); margin-bottom: 20px;">MULTIPLAYER</h2>
+                    <p>Connecting to Server...</p>
+                </div>
+                <div id="game-over-screen" class="screen">
+                    <h1>GAME OVER</h1>
+                    <p>Final Score: <span id="final-score">0</span></p>
+                    <p>Press <span class="key-highlight">SPACE</span> to Restart</p>
+                </div>
+            </div>
+            <canvas id="game-canvas"></canvas>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
