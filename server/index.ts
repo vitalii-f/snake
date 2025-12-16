@@ -36,6 +36,12 @@ function resetPlayer(player: Player) {
     player.score = 0;
 }
 
+import path from 'path';
+
+// Resolve project root relative to this file
+// If script is in /server/index.ts, root is ../
+const PROJECT_ROOT = path.resolve(import.meta.dir, '..');
+
 const server = Bun.serve({
     port: 3020,
     fetch(req, server) {
@@ -45,13 +51,17 @@ const server = Bun.serve({
         }
 
         const url = new URL(req.url);
+        let filePath = '';
 
-        // Serve Static Files
-        if (url.pathname === '/') return new Response(Bun.file("index.html"));
-        if (url.pathname === '/style.css') return new Response(Bun.file("style.css"));
-        if (url.pathname === '/script.js') return new Response(Bun.file("script.js"));
+        // Router
+        if (url.pathname === '/') filePath = 'index.html';
+        else if (url.pathname === '/style.css') filePath = 'style.css';
+        else if (url.pathname === '/script.js') filePath = 'script.js';
+        else return new Response("Not Found", { status: 404 });
 
-        return new Response("Not Found", { status: 404 });
+        // Serve file from Project Root
+        const file = Bun.file(path.join(PROJECT_ROOT, filePath));
+        return new Response(file);
     },
     websocket: {
         open(ws) {
