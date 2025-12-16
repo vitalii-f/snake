@@ -9,7 +9,9 @@ type Player = {
     color: string;
     score: number;
     name: string;
+    lastMoveTime: number;
 };
+const MOVE_INTERVAL = 100; // Snake moves every 100ms (10 moves/sec)
 
 const players = new Map<string, Player>();
 let food: Point = { x: 10, y: 10 };
@@ -34,6 +36,7 @@ function resetPlayer(player: Player) {
     ];
     player.velocity = { x: 0, y: 0 };
     player.score = 0;
+    player.lastMoveTime = Date.now(); // Reset move timer
 }
 
 import path from 'path';
@@ -79,7 +82,8 @@ try {
                     velocity: { x: 0, y: 0 },
                     color,
                     score: 0,
-                    name: 'Guest'
+                    name: 'Guest',
+                    lastMoveTime: Date.now()
                 };
 
                 resetPlayer(player);
@@ -132,8 +136,15 @@ try {
 // Game Loop
 setInterval(() => {
     // Update all players
+    const now = Date.now();
     for (const player of players.values()) {
         if (player.velocity.x === 0 && player.velocity.y === 0) continue;
+
+        // Throttle movement
+        if (now - player.lastMoveTime < MOVE_INTERVAL) {
+            continue; // Skip this tick if not enough time passed
+        }
+        player.lastMoveTime = now;
 
         const head = { ...player.body[0] };
         head.x += player.velocity.x;
