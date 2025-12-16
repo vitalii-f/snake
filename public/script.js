@@ -1,7 +1,15 @@
 const canvas = document.getElementById('game-canvas');
-const ctx = canvas.getContext('2d');
+
+// If we are not on the game page (no canvas), stop execution or handle gracefully
+if (!canvas) {
+    console.log('No game canvas found, skipping game script initialization');
+    // We can just return or throw to stop execution if this script is only for game
+    // But since we are at top level, we can wrap everything in a block or just exit if possible.
+    // Since we can't easily "return" from top level, we will wrap the logic.
+}
+
+const ctx = canvas ? canvas.getContext('2d') : null;
 const scoreElement = document.getElementById('score');
-const startScreen = document.getElementById('start-screen');
 const statusElement = document.createElement('div');
 statusElement.style.position = 'absolute';
 statusElement.style.bottom = '10px';
@@ -13,12 +21,13 @@ document.body.appendChild(statusElement);
 const GRID_SIZE = 20;
 const TILE_COUNT = 20;
 
-// Set canvas dimensions
-canvas.width = GRID_SIZE * TILE_COUNT;
-canvas.height = GRID_SIZE * TILE_COUNT;
+if (canvas) {
+    // Set canvas dimensions
+    canvas.width = GRID_SIZE * TILE_COUNT;
+    canvas.height = GRID_SIZE * TILE_COUNT;
+}
 
 // WebSocket Setup
-// Connect to the same host/port that served the page, but use ws:// protocol
 const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
 const ws = new WebSocket(`${protocol}//${location.host}`);
 
@@ -27,33 +36,25 @@ let food = { x: -1, y: -1 };
 let myId = null;
 
 ws.onopen = () => {
-    // statusElement.textContent = 'Connected to Server';
-    // statusElement.style.color = '#00ff9d';
+    // Handled in specific logic below
 };
 
-ws.onclose = () => {
-    // statusElement.textContent = 'Disconnected';
-    // statusElement.style.color = '#ff0055';
-};
-
-// Simple update loop
-draw();
-updateLeaderboard();
+// ... other connection primitives ...
 
 const pingDisplay = document.getElementById('ping-display');
 const fpsDisplay = document.getElementById('fps-display');
 const showPing = localStorage.getItem('snake_show_ping') === 'true';
 const showFps = localStorage.getItem('snake_show_fps') === 'true';
 
-if (showPing) pingDisplay.classList.remove('hidden');
-if (showFps) fpsDisplay.classList.remove('hidden');
+if (pingDisplay && showPing) pingDisplay.classList.remove('hidden');
+if (fpsDisplay && showFps) fpsDisplay.classList.remove('hidden');
 
-// FPS Counter
+// FPS Counter declaration
 let frameCount = 0;
 let lastFpsTime = Date.now();
 let fps = 0;
 
-if (showFps) {
+if (showFps && fpsDisplay) {
     setInterval(() => {
         fps = frameCount;
         frameCount = 0;
@@ -80,27 +81,33 @@ ws.onmessage = (event) => {
 
     if (data.type === 'pong') {
         const latency = Date.now() - data.timestamp;
-        pingDisplay.textContent = `Ping: ${latency} ms`;
+        if (pingDisplay) pingDisplay.textContent = `Ping: ${latency} ms`;
         return;
     }
 
     // Normal game state
-    const state = data; // Actually data IS state if not pong? Wait, checks below.
-    // The server sends { type: 'game', ... } or just state? 
-    // Looking at server code: server.publish("game", JSON.stringify(state));
-    // So message is just state object.
-    // We need to change server to send { type: 'pong' } differently OR wrap game state in type.
-    // Currently server sends raw object: { players: ..., food: ... }
-
     // We should assume if data has 'players' it is game state.
     if (data.players) {
         players = data.players;
         food = data.food;
-        draw();
-        updateLeaderboard();
-        frameCount++; // Count frame
+        if (typeof updateLeaderboard === 'function') updateLeaderboard();
+        // REMOVED draw() and frameCount++ from here
     }
 };
+
+// Render Loop
+function gameLoop() {
+    if (typeof draw === 'function') {
+        draw();
+        frameCount++;
+    }
+    requestAnimationFrame(gameLoop);
+}
+
+// Start the loop
+if (canvas) {
+    requestAnimationFrame(gameLoop);
+}
 
 const nicknameInput = document.getElementById('nickname-input'); // Likely null on game page, check existence
 const joinBtn = document.getElementById('join-btn'); // Likely null
