@@ -18,6 +18,7 @@ type Player = {
     achievements: string[]; // JSON array
     dbId?: string;
     mode: 'standard' | 'rewind';
+    hasMoved: boolean;
 };
 import { prisma } from './prisma';
 
@@ -186,6 +187,7 @@ function resetPlayer(player: Player) {
     player.score = 0;
     player.lastMoveTime = Date.now(); // Reset move timer
     player.streak = 0;
+    player.hasMoved = false;
 }
 
 async function savePlayerProgress(player: Player) {
@@ -291,7 +293,8 @@ try {
                     score: 0,
                     name: 'Guest',
                     lastMoveTime: Date.now(),
-                    mode: 'standard'
+                    mode: 'standard',
+                    hasMoved: false
                 };
 
                 resetPlayer(player);
@@ -360,6 +363,7 @@ try {
                         return;
                     }
                     player.velocity = { x, y };
+                    player.hasMoved = true;
                 }
 
                 if (data.type === 'rewind') {
@@ -464,6 +468,11 @@ setInterval(() => {
         let collided = false;
         // ... (existing collision logic) ...
         for (const other of players.values()) {
+            // Ignore collision if the OTHER player hasn't moved yet (spawn protection)
+            // But wait, if *I* haven't moved, I'm just sitting there.
+            // If *I* run into *THEM* and they haven't moved, I should pass through them.
+            if (!other.hasMoved) continue;
+
             for (const segment of other.body) {
                 if (head.x === segment.x && head.y === segment.y) {
                     collided = true;
