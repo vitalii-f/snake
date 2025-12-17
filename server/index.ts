@@ -26,6 +26,125 @@ let sessionBestPlayer = '';
 const MOVE_INTERVAL = 100; // Snake moves every 100ms (10 moves/sec)
 
 const players = new Map<string, Player>();
+const ghosts: Ghost[] = [];
+
+// Ghost Class
+type Ghost = {
+    body: Point[];
+    path: Point[][]; // Future moves to replay
+    color: string;
+    createdAt: number;
+};
+
+// History for Time Travel
+type GameSnapshot = {
+    players: { id: string, body: Point[], color: string }[];
+    food: Point;
+    timestamp: number;
+};
+
+const HISTORY_BUFFER_SIZE = 100; // 5 seconds at 20 TPS
+const history: GameSnapshot[] = [];
+
+function saveSnapshot() {
+    // Deep copy players to avoid reference issues
+    const playersSnap = Array.from(players.values()).map(p => ({
+        id: p.id,
+        body: JSON.parse(JSON.stringify(p.body)), // Deep copy points
+        color: p.color
+    }));
+
+    history.push({
+        players: playersSnap,
+        food: { ...food },
+        timestamp: Date.now()
+    });
+
+    if (history.length > HISTORY_BUFFER_SIZE) {
+        history.shift();
+    }
+}
+
+function restoreStateAndSpawnGhosts(initiatorId: string) {
+    if (history.length < 60) return; // Need at least 3 seconds (60 ticks)
+
+    // 1. Find snapshot 3 seconds ago (approx index length - 60)
+    if (history.length === 0) return;
+    const targetIndex = Math.max(0, history.length - 60);
+    const snapshot = history[targetIndex];
+    if (!snapshot) return;
+
+    // 2. Create Ghosts from current futures (from targetIndex to now)
+    // For each player that existed then AND now
+    const currentPlayers = Array.from(players.values());
+
+    // We need to build paths for ghosts.
+    // The path is the sequence of body positions from targetIndex to NOW.
+    // Actually, Ghost just needs to replay the HEAD positions or the whole body flow?
+    // User said: "Repeat past movements". "Virtual snake".
+    // Simplest: Ghost starts at snapshot position, and we assign it a list of moves (deltas) or absolute positions to interpolate.
+    // Let's store absolute body states for simplicity in replay.
+
+    // Extract paths for all active players from history[targetIndex...end]
+    const recordedPaths = new Map<string, Point[][]>();
+
+    for (let i = targetIndex; i < history.length; i++) {
+        const snap = history[i];
+        if (!snap) continue;
+        snap.players.forEach(p => {
+            if (!recordedPaths.has(p.id)) {
+                recordedPaths.set(p.id, []);
+            }
+            recordedPaths.get(p.id)!.push(p.body as Point[]);
+        });
+    }
+
+    // Spawn Ghosts
+    recordedPaths.forEach((path, pid) => {
+        // Only spawn ghost if player still exists or valid
+        if (path.length > 0) {
+            // Use the color of the original player
+            const pParams = history[targetIndex]?.players.find(p => p.id === pid);
+            const color = pParams ? pParams.color : '#ffffff';
+
+            ghosts.push({
+                body: path[0], // Start at beginning of replay
+                path: path,
+                color: `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, 0.5)`, // Transparent ghost
+                createdAt: Date.now()
+            });
+        }
+    });
+
+    // 3. Restore State
+    // We only restore POSITIONS. Scores/XP are preserved (Time Travel paradox?)
+    // User: "Scores/XP not mentioned to rollback". Usually mechanics preserve score to avoid griefing? 
+    // "Initiator pays price". Others suffer temporal distortion.
+    // Let's restore positions but keep scores for now, or maybe just positions.
+    // Restoring positions:
+    snapshot.players.forEach(snapP => {
+        const liveP = players.get(snapP.id);
+        if (liveP) {
+            liveP.body = JSON.parse(JSON.stringify(snapP.body));
+            // Reset velocity? Or keep current intent?
+            // Resetting velocity to 0 gives them a moment to react.
+            // Or maybe infer velocity from snapshot?
+            // Let's set velocity to 0 to prevent instant death on resume.
+            // liveP.velocity = { x: 0, y: 0 }; 
+            // Actually, keeping momentum is more chaotic/fun.
+        }
+    });
+
+    food = { ...snapshot.food };
+
+    // Clear history after the restore point? 
+    // No, we continue appending. 
+    // Actually, we should probably trim history after the restore point to avoid jumping forward again?
+    // "World rolls back". So history should probably truncate to targetIndex.
+    history.length = targetIndex + 1;
+
+    console.log(`TIME REWIND! Initiated by ${initiatorId}`);
+}
 let food: Point = { x: 10, y: 10 };
 
 // Colors for players (Excluded Food Color #FF0055)
@@ -119,7 +238,9 @@ import path from 'path';
 const PROJECT_ROOT = path.resolve(import.meta.dir, '..');
 
 
-let server;
+import type { Server } from "bun";
+
+let server: Server<any>;
 try {
     server = Bun.serve({
         port: 3021,
@@ -219,6 +340,22 @@ try {
                     player.velocity = { x, y };
                 }
 
+                if (data.type === 'rewind') {
+                    // Check conditions
+                    if (!player) return;
+                    if (player.body.length <= 5) return; // Cost check
+
+                    // Cost: Lose 2 segments
+                    player.body.pop();
+                    player.body.pop();
+
+                    // Trigger global rewind
+                    restoreStateAndSpawnGhosts(player.id);
+
+                    // Broadcast effect
+                    server.publish("game", JSON.stringify({ type: 'rewind_effect' }));
+                }
+
                 if (data.type === 'ping') {
                     ws.send(JSON.stringify({ type: 'pong', timestamp: data.timestamp }));
                 }
@@ -243,14 +380,29 @@ try {
 
 // Game Loop
 setInterval(() => {
+    saveSnapshot();
+
+    // Update Ghosts
+    for (let i = ghosts.length - 1; i >= 0; i--) {
+        const ghost = ghosts[i];
+        if (!ghost) continue;
+
+        if (ghost.path.length > 0) {
+            ghost.body = ghost.path.shift()!; // Move to next recorded step
+        } else {
+            ghosts.splice(i, 1); // Remove finished ghost
+        }
+    }
+
     // Update all players
     const now = Date.now();
     for (const player of players.values()) {
+        // ... (existing helper logic) ...
         if (player.velocity.x === 0 && player.velocity.y === 0) continue;
 
-        // Throttle movement
+        // Throttle
         if (now - player.lastMoveTime < MOVE_INTERVAL) {
-            continue; // Skip this tick if not enough time passed
+            continue;
         }
         player.lastMoveTime = now;
 
@@ -258,16 +410,34 @@ setInterval(() => {
         head.x += player.velocity.x;
         head.y += player.velocity.y;
 
-        // Wrap around logic (optional) or Wall Death?
-        // Let's implement Wall Death for now
+        // Wall Collision
         if (head.x < 0 || head.x >= TILE_COUNT || head.y < 0 || head.y >= TILE_COUNT) {
-            savePlayerProgress(player); // Save on death
+            savePlayerProgress(player);
             resetPlayer(player);
             continue;
         }
 
-        // Self collision or Other player collision
+        // Ghost Collision
+        let hitGhost = false;
+        for (const ghost of ghosts) {
+            for (const seg of ghost.body) {
+                if (head.x === seg.x && head.y === seg.y) {
+                    hitGhost = true;
+                    break;
+                }
+            }
+            if (hitGhost) break;
+        }
+
+        if (hitGhost) {
+            savePlayerProgress(player);
+            resetPlayer(player);
+            continue;
+        }
+
+        // Player Collision
         let collided = false;
+        // ... (existing collision logic) ...
         for (const other of players.values()) {
             for (const segment of other.body) {
                 if (head.x === segment.x && head.y === segment.y) {
@@ -279,40 +449,32 @@ setInterval(() => {
         }
 
         if (collided) {
-            savePlayerProgress(player); // Save on death
+            savePlayerProgress(player);
             resetPlayer(player);
             continue;
         }
 
         player.body.unshift(head);
 
-        // Check Food
         if (head.x === food.x && head.y === food.y) {
             player.score += 10;
             player.streak = (player.streak || 0) + 1;
-
+            // ... (Miracle logic) ...
             if (player.streak === 5) {
-                // Determine if we should broadcast to everyone or just the player? 
-                // "Christmas miracle" sounds like a global or local effect? 
-                // Let's send to everyone so they see the miracle.
-                // Or maybe just the player? User said "when I eat 5 apples". 
-                // Let's send to all clients to trigger the visual (maybe global snow is cooler).
                 const miracle = { type: 'christmas_miracle', playerId: player.id };
                 server.publish("game", JSON.stringify(miracle));
             }
 
             spawnFood();
-            // Don't pop tail -> grow
         } else {
             player.body.pop();
         }
 
-        // Update Session High Score
+        // ... (Score updates) ...
         if (player.score > sessionHighScore) {
             sessionHighScore = player.score;
             sessionBestPlayer = player.name;
         }
-        // Update Personal Best (in memory for now, saved to DB on death)
         if (player.score > player.bestScore) {
             player.bestScore = player.score;
         }
@@ -320,10 +482,8 @@ setInterval(() => {
 
     // Broadcast state
     const state = {
-        players: Array.from(players.values()).map(p => ({
-            ...p,
-            dbId: undefined // Don't send DB ID to client
-        })),
+        players: Array.from(players.values()).map(p => ({ ...p, dbId: undefined })),
+        ghosts,
         food,
         sessionHighScore,
         sessionBestPlayer

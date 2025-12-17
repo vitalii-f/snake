@@ -23,6 +23,8 @@
             </div>
 
             <button id="start-btn" class="menu-btn primary">START GAME</button>
+            <button id="start-rewind-btn" class="menu-btn"
+                style="border-color: #f0f; color: #f0f; margin-top: 10px;">TIME REWIND MODE</button>
 
             <div class="secondary-buttons">
                 <button class="menu-btn disabled">PROFILE</button>
@@ -111,7 +113,9 @@
                     colorPickerContainer.appendChild(div);
                 });
 
-                function startGame() {
+                const startRewindBtn = document.getElementById('start-rewind-btn');
+
+                function startGame(mode = 'standard') {
                     const nickname = nicknameInput.value.trim();
                     if (!nickname) {
                         alert('Please enter a nickname');
@@ -119,10 +123,15 @@
                     }
                     localStorage.setItem('snake_nickname', nickname);
                     localStorage.setItem('snake_color', selectedColor);
-                    window.location.href = '/game';
+                    // Pass mode via query param or just generic game page and socket handles it?
+                    // Let's use query param to tell client script to request specific mode
+                    window.location.href = `/game?mode=${mode}`;
                 }
 
-                startBtn.addEventListener('click', startGame);
+                startBtn.addEventListener('click', () => startGame('standard'));
+                if (startRewindBtn) {
+                    startRewindBtn.addEventListener('click', () => startGame('rewind'));
+                }
 
                 nicknameInput.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') startGame();

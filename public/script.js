@@ -107,12 +107,31 @@ ws.onmessage = (event) => {
         return;
     }
 
+    if (data.type === 'rewind_effect') {
+        // Visual distortion
+        document.body.style.filter = 'invert(1) hue-rotate(180deg)';
+        setTimeout(() => {
+            document.body.style.filter = 'none';
+        }, 200);
+        return;
+    }
+
     // Normal game state
     // We should assume if data has 'players' it is game state.
     if (data.players) {
         players = data.players;
         food = data.food;
+
+        // Handle Ghosts
+        if (data.ghosts) {
+            drawGhosts(data.ghosts);
+        } else {
+            // Clear ghosts if none sent (or draw function handles empty list)
+            drawGhosts([]);
+        }
+
         if (data.sessionHighScore !== undefined) {
+            // ...
             sessionHighScore = data.sessionHighScore;
             sessionBestPlayer = data.sessionBestPlayer || '';
         }
@@ -174,10 +193,28 @@ if (!savedNickname) {
 ws.onopen = () => {
     if (savedNickname) {
         const savedColor = localStorage.getItem('snake_color');
-        ws.send(JSON.stringify({ type: 'join', name: savedNickname, color: savedColor }));
+        // Get mode from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const gameMode = urlParams.get('mode') || 'standard';
+
+        ws.send(JSON.stringify({
+            type: 'join',
+            name: savedNickname,
+            color: savedColor,
+            mode: gameMode
+        }));
         isGameActive = true;
     }
 };
+
+document.addEventListener('keydown', (e) => {
+    if (!isGameActive) return;
+
+    if (e.code === 'Space') {
+        ws.send(JSON.stringify({ type: 'rewind' }));
+        return;
+    }
+});
 
 // joinBtn.addEventListener('click', joinGame); // Removed
 // nicknameInput.addEventListener('keydown', (e) => { // Removed
@@ -237,6 +274,12 @@ function updateScore() {
     }
 }
 
+let currentGhosts = [];
+
+function drawGhosts(ghosts) {
+    currentGhosts = ghosts;
+}
+
 function draw() {
     // Clear screen
     ctx.fillStyle = '#050510';
@@ -255,6 +298,18 @@ function draw() {
         ctx.moveTo(0, i * GRID_SIZE);
         ctx.lineTo(canvas.width, i * GRID_SIZE);
         ctx.stroke();
+    }
+
+    // Draw Ghosts
+    if (currentGhosts) {
+        currentGhosts.forEach(g => {
+            g.body.forEach((segment, index) => {
+                const x = segment.x * GRID_SIZE;
+                const y = segment.y * GRID_SIZE;
+                ctx.fillStyle = g.color || 'rgba(255, 255, 255, 0.3)';
+                ctx.fillRect(x + 1, y + 1, GRID_SIZE - 2, GRID_SIZE - 2);
+            });
+        });
     }
 
     // Draw Food
