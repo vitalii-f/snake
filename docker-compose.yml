@@ -7,4 +7,22 @@ services:
       - "3020:3020"
     volumes:
       - .:/app
-    # Enable hot reload/watch mode if desired, but default command is fine for now
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres:5432/snake_db
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: snake_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

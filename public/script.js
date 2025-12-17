@@ -34,6 +34,20 @@ const ws = new WebSocket(`${protocol}//${location.host}`);
 let players = [];
 let food = { x: -1, y: -1 };
 let myId = null;
+let sessionHighScore = 0;
+let sessionBestPlayer = '';
+
+// Profile Display
+const profileDiv = document.createElement('div');
+profileDiv.id = 'profile-display';
+profileDiv.style.position = 'absolute';
+profileDiv.style.top = '10px';
+profileDiv.style.right = '10px';
+profileDiv.style.color = 'white';
+profileDiv.style.fontFamily = 'monospace';
+profileDiv.style.textAlign = 'right';
+document.body.appendChild(profileDiv);
+
 
 ws.onopen = () => {
     // Handled in specific logic below
@@ -103,10 +117,28 @@ ws.onmessage = (event) => {
     if (data.players) {
         players = data.players;
         food = data.food;
+        if (data.sessionHighScore !== undefined) {
+            sessionHighScore = data.sessionHighScore;
+            sessionBestPlayer = data.sessionBestPlayer || '';
+        }
         if (typeof updateLeaderboard === 'function') updateLeaderboard();
-        // REMOVED draw() and frameCount++ from here
+        if (typeof updateProfile === 'function') updateProfile();
+        if (typeof updateScore === 'function') updateScore();
     }
 };
+
+function updateProfile() {
+    const myPlayer = players.find(p => p.name === savedNickname);
+    if (myPlayer) {
+        profileDiv.innerHTML = `
+            <h3>${myPlayer.name}</h3>
+            <div>Level: ${myPlayer.level || 1}</div>
+            <div>XP: ${myPlayer.xp || 0}</div>
+            <div>Best: ${myPlayer.bestScore || 0}</div>
+            <div>Achievements: ${(myPlayer.achievements || []).length}</div>
+        `;
+    }
+}
 
 // Render Loop
 function gameLoop() {
@@ -162,7 +194,7 @@ function updateLeaderboard() {
 
     leaderboardList.innerHTML = sortedPlayers.map(p => `
         <div class="leaderboard-item">
-            <span class="leaderboard-name" style="color: ${p.color}">${p.name}</span>
+            <span class="leaderboard-name" style="color: ${p.color}">${p.name} (Lvl ${p.level || 1})</span>
             <span class="leaderboard-score">${p.score}</span>
         </div>
     `).join('');
@@ -203,7 +235,7 @@ function updateScore() {
     // Let's just sum all scores for now or find max
     if (players.length > 0) {
         const topScore = Math.max(...players.map(p => p.score));
-        scoreElement.textContent = `Players: ${players.length} | Top Score: ${topScore}`;
+        scoreElement.innerHTML = `Players: ${players.length} | Session Best: ${sessionHighScore} (${sessionBestPlayer})`;
     }
 }
 
