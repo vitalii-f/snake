@@ -96,7 +96,9 @@ function restoreStateAndSpawnGhosts(initiatorId: string) {
             if (!recordedPaths.has(p.id)) {
                 recordedPaths.set(p.id, []);
             }
-            recordedPaths.get(p.id)!.push(p.body as Point[]);
+            // Ensure p.body is treated as Point[]
+            const body = p.body as Point[];
+            recordedPaths.get(p.id)!.push(body);
         });
     }
 
@@ -216,7 +218,7 @@ async function savePlayerProgress(player: Player) {
         });
 
         // Recalculate level based on new XP
-        const newLevel = Math.floor(updated.xp / 1000) + 1;
+        let newLevel = Math.floor(updated.xp / 1000) + 1;
         if (newLevel > updated.level) {
             await prisma.player.update({
                 where: { id: player.dbId },
@@ -224,7 +226,12 @@ async function savePlayerProgress(player: Player) {
             });
         }
 
-        console.log(`Saved progress for ${player.name}: +${currentScore} XP`);
+        // Update in-memory player object so client sees changes immediately
+        player.xp = updated.xp;
+        player.level = newLevel;
+        player.achievements = newAchievements;
+
+        console.log(`Saved progress for ${player.name}: +${currentScore} XP. New Lvl: ${newLevel}`);
     } catch (e) {
         console.error(`Failed to save player ${player.name}:`, e);
     }
