@@ -313,8 +313,14 @@ p {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    margin-bottom: 20px;
-    border-radius: 4px; /* Slight rounded corners */
+    border-radius: 4px;
+    /* Slight rounded corners */
+
+    /* Fixed Top-Left Positioning */
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
 }
 
 .profile-header {

@@ -97,7 +97,7 @@ async function savePlayerProgress(player: Player) {
         });
 
         // Recalculate level based on new XP
-        const newLevel = Math.floor(Math.sqrt(updated.xp / 100)) + 1;
+        const newLevel = Math.floor(updated.xp / 1000) + 1;
         if (newLevel > updated.level) {
             await prisma.player.update({
                 where: { id: player.dbId },
