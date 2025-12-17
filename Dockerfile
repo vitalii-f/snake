@@ -6,8 +6,14 @@ WORKDIR /app
 COPY package.json .
 COPY bun.lock .
 
+# Copy prisma schema
+COPY prisma ./prisma
+
 # Install dependencies
 RUN bun install
+
+# Generate Prisma client
+RUN bunx prisma generate
 
 # Copy server code
 COPY server ./server
@@ -16,7 +22,7 @@ COPY server ./server
 COPY public ./public
 
 # Expose port
-EXPOSE 3020
+EXPOSE 3021
 
 # Start server
 CMD ["bun", "run", "server/index.ts"]
