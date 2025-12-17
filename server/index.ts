@@ -21,6 +21,14 @@ type Player = {
     hasMoved: boolean;
 };
 import { prisma } from './prisma';
+import fs from 'fs';
+import path from 'path';
+
+const ADMIN_PASSWORD = 'snake_dev_123';
+import fs from 'fs';
+import path from 'path';
+
+const ADMIN_PASSWORD = 'snake_dev_123';
 
 // Ghost Class
 type Ghost = {
@@ -327,6 +335,48 @@ try {
         fetch(req, server) {
             if (server.upgrade(req)) return;
             const url = new URL(req.url);
+            
+            // MUSIC API
+            if (url.pathname === '/api/music' && req.method === 'GET') {
+                const musicDir = path.join(PROJECT_ROOT, 'public', 'music');
+                if (!fs.existsSync(musicDir)) {
+                     return new Response(JSON.stringify([]), { headers: { 'Content-Type': 'application/json' }});
+                }
+                const files = fs.readdirSync(musicDir).filter(f => f.endsWith('.mp3') || f.endsWith('.wav') || f.endsWith('.ogg'));
+                return new Response(JSON.stringify(files), { headers: { 'Content-Type': 'application/json' }});
+            }
+
+            if (url.pathname === '/api/upload' && req.method === 'POST') {
+                const password = req.headers.get('x-admin-password');
+                if (password !== ADMIN_PASSWORD) {
+                    return new Response("Unauthorized", { status: 403 });
+                }
+
+                const contentType = req.headers.get('content-type') || '';
+                const boundary = contentType.split('boundary=')[1];
+
+                if (!boundary) return new Response("Missing boundary", { status: 400 });
+
+                // Basic FormData parsing in Bun (or just read blob if simpler)
+                // Actually Bun.serve request can give us formData() directly
+                const formData = await req.formData();
+                const file = formData.get('file');
+
+                if (file instanceof File) {
+                    const musicDir = path.join(PROJECT_ROOT, 'public', 'music');
+                    if (!fs.existsSync(musicDir)) fs.mkdirSync(musicDir, { recursive: true });
+                    
+                    const bytes = await file.arrayBuffer();
+                    const buffer = Buffer.from(bytes);
+                    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_'); // Sanitize
+                    fs.writeFileSync(path.join(musicDir, safeName), buffer);
+                    
+                    return new Response("Uploaded", { status: 200 });
+                }
+                
+                return new Response("No file", { status: 400 });
+            }
+
             let filePath = url.pathname;
             if (filePath === '/') filePath = '/index.html';
             else if (filePath === '/game') filePath = '/game.html';
