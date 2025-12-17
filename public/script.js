@@ -129,15 +129,15 @@ ws.onmessage = (event) => {
 
 function updateProfile() {
     const myPlayer = players.find(p => p.name === savedNickname);
-    if (myPlayer) {
-        profileDiv.innerHTML = `
-            <h3>${myPlayer.name}</h3>
-            <div>Level: ${myPlayer.level || 1}</div>
-            <div>XP: ${myPlayer.xp || 0}</div>
-            <div>Best: ${myPlayer.bestScore || 0}</div>
-            <div>Achievements: ${(myPlayer.achievements || []).length}</div>
-        `;
-    }
+    // if (myPlayer) {
+    //     profileDiv.innerHTML = `
+    //         <h3>${myPlayer.name}</h3>
+    //         <div>Level: ${myPlayer.level || 1}</div>
+    //         <div>XP: ${myPlayer.xp || 0}</div>
+    //         <div>Best: ${myPlayer.bestScore || 0}</div>
+    //         <div>Achievements: ${(myPlayer.achievements || []).length}</div>
+    //     `;
+    // }
 }
 
 // Render Loop
