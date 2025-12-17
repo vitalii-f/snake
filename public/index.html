@@ -18,8 +18,14 @@
                 <input type="text" id="nickname-input" placeholder="Enter Nickname" maxlength="10">
             </div>
 
-            <div class="color-picker" id="color-picker-container">
-                <!-- Colors injected by JS -->
+            <div class="color-picker" id="color-picker-container"
+                style="flex-direction: column; align-items: center; gap: 10px;">
+                <canvas id="color-wheel" width="150" height="150"
+                    style="border-radius: 50%; cursor: crosshair; box-shadow: 0 0 15px rgba(0,0,0,0.5);"></canvas>
+                <div id="selected-color-preview"
+                    style="width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 10px rgba(0,0,0,0.5);">
+                </div>
+                <div style="font-size: 0.8rem; color: #888;">Выберите цвет</div>
             </div>
 
             <button id="start-btn" class="menu-btn primary">START GAME</button>
@@ -114,25 +120,85 @@
                     window.location.href = '/game';
                 }
 
-                const colorPickerContainer = document.getElementById('color-picker-container');
-                const COLORS = ['#00FF9D', '#00F3FF', '#FFFF00', '#FF00FF', '#0000FF']; // Excluded Red (#FF0055)
-                let selectedColor = localStorage.getItem('snake_color') || COLORS[0];
+                // Color Wheel Logic
+                const canvas = document.getElementById('color-wheel');
+                const ctx = canvas.getContext('2d');
+                const preview = document.getElementById('selected-color-preview');
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const radius = canvas.width / 2;
 
-                COLORS.forEach(color => {
-                    const div = document.createElement('div');
-                    div.className = 'color-option';
-                    div.style.backgroundColor = color;
-                    div.style.color = color; // For box-shadow inheritance
-                    if (color === selectedColor) div.classList.add('selected');
+                // Draw Wheel
+                function drawWheel() {
+                    const gradient = ctx.createConicGradient(0, centerX, centerY);
+                    gradient.addColorStop(0, "red");
+                    gradient.addColorStop(0.17, "yellow");
+                    gradient.addColorStop(0.33, "lime");
+                    gradient.addColorStop(0.5, "cyan");
+                    gradient.addColorStop(0.66, "blue");
+                    gradient.addColorStop(0.83, "magenta");
+                    gradient.addColorStop(1, "red");
 
-                    div.addEventListener('click', () => {
-                        document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
-                        div.classList.add('selected');
-                        selectedColor = color;
-                        localStorage.setItem('snake_color', color);
-                    });
-                    colorPickerContainer.appendChild(div);
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                    ctx.fill();
+
+                    // Inner white/black radial to make it "Photoshop-like" (optional, but requested simple wheel)
+                    // Let's keep just hue for Neon style flexibility.
+                }
+                drawWheel();
+
+                let selectedColor = localStorage.getItem('snake_color') || '#00FF9D';
+                preview.style.backgroundColor = selectedColor;
+
+                // Utils
+                function rgbToHex(r, g, b) {
+                    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+                }
+
+                function hexToRgb(hex) {
+                    const bigint = parseInt(hex.slice(1), 16);
+                    const r = (bigint >> 16) & 255;
+                    const g = (bigint >> 8) & 255;
+                    const b = bigint & 255;
+                    return { r, g, b };
+                }
+
+                function getDistance(c1, c2) {
+                    return Math.sqrt(Math.pow(c1.r - c2.r, 2) + Math.pow(c1.g - c2.g, 2) + Math.pow(c1.b - c2.b, 2));
+                }
+
+                const FOOD_COLOR_RGB = hexToRgb('#FF0055');
+
+                canvas.addEventListener('click', (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    // Check if inside circle
+                    const dx = x - centerX;
+                    const dy = y - centerY;
+                    if (dx * dx + dy * dy > radius * radius) return;
+
+                    const pixel = ctx.getImageData(x, y, 1, 1).data;
+                    const pickedRgb = { r: pixel[0], g: pixel[1], b: pixel[2] };
+
+                    // Validate against Food Color (#FF0055)
+                    // Tolerance: distance < 60 (approx)
+                    const dist = getDistance(pickedRgb, FOOD_COLOR_RGB);
+                    if (dist < 60) {
+                        alert("Этот цвет слишком похож на еду! Выберите другой.");
+                        return;
+                    }
+
+                    selectedColor = rgbToHex(pickedRgb.r, pickedRgb.g, pickedRgb.b);
+                    preview.style.backgroundColor = selectedColor;
+                    preview.style.boxShadow = `0 0 15px ${selectedColor}`;
+                    localStorage.setItem('snake_color', selectedColor);
                 });
+
+                /* Previous Code: COLORS list... Removed */
 
                 const startRewindBtn = document.getElementById('start-rewind-btn');
                 const rewindHelpBtn = document.getElementById('rewind-help-btn');

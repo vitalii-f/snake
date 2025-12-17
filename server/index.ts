@@ -15,6 +15,7 @@ type Player = {
     xp: number;
     level: number;
     bestScore: number;
+    achievements: string[]; // JSON array
     dbId?: string;
     mode: 'standard' | 'rewind';
 };
@@ -181,7 +182,6 @@ function resetPlayer(player: Player) {
     ];
     player.velocity = { x: 0, y: 0 };
     player.score = 0;
-    player.score = 0;
     player.lastMoveTime = Date.now(); // Reset move timer
     player.streak = 0;
 }
@@ -273,17 +273,17 @@ try {
 
                 const player: Player = {
                     id,
+                    streak: 0,
+                    xp: 0,
+                    level: 1,
+                    bestScore: 0,
+                    achievements: [],
                     body: [{ x: 5, y: 5 }], // Initial position
                     velocity: { x: 0, y: 0 },
                     color,
                     score: 0,
                     name: 'Guest',
                     lastMoveTime: Date.now(),
-                    streak: 0,
-                    xp: 0,
-                    level: 1,
-                    bestScore: 0,
-                    achievements: [],
                     mode: 'standard'
                 };
 
@@ -307,9 +307,22 @@ try {
                     player.name = name;
                     player.mode = data.mode || 'standard'; // Set game mode
 
-                    // Set color if valid and not food color
-                    if (data.color && COLORS.includes(data.color)) {
-                        player.color = data.color;
+                    // Validate Color (Must not be close to #FF0055)
+                    if (data.color && /^#[0-9A-F]{6}$/i.test(data.color)) {
+                        const r = parseInt(data.color.slice(1, 3), 16);
+                        const g = parseInt(data.color.slice(3, 5), 16);
+                        const b = parseInt(data.color.slice(5, 7), 16);
+
+                        // Food Color #FF0055 -> 255, 0, 85
+                        const dist = Math.sqrt(
+                            Math.pow(r - 255, 2) +
+                            Math.pow(g - 0, 2) +
+                            Math.pow(b - 85, 2)
+                        );
+
+                        if (dist > 60) {
+                            player.color = data.color;
+                        }
                     }
 
                     // Load/Create from DB
