@@ -15,8 +15,8 @@ type Player = {
     xp: number;
     level: number;
     bestScore: number;
-    achievements: string[]; // JSON array
     dbId?: string;
+    mode: 'standard' | 'rewind';
 };
 import { prisma } from './prisma';
 
@@ -283,7 +283,8 @@ try {
                     xp: 0,
                     level: 1,
                     bestScore: 0,
-                    achievements: []
+                    achievements: [],
+                    mode: 'standard'
                 };
 
                 resetPlayer(player);
@@ -304,6 +305,7 @@ try {
                 if (data.type === 'join') {
                     const name = data.name || 'Guest';
                     player.name = name;
+                    player.mode = data.mode || 'standard'; // Set game mode
 
                     // Set color if valid and not food color
                     if (data.color && COLORS.includes(data.color)) {
@@ -343,6 +345,7 @@ try {
                 if (data.type === 'rewind') {
                     // Check conditions
                     if (!player) return;
+                    if (player.mode !== 'rewind') return; // Strict mode check
                     if (player.body.length <= 5) return; // Cost check
 
                     // Cost: Lose 2 segments
@@ -417,7 +420,9 @@ setInterval(() => {
             continue;
         }
 
-        // Ghost Collision
+        // Ghost Collision (Applies to everyone effectively, or should standard players be immune to ghosts? 
+        // "Ghosts... Block space... Kill players". 
+        // Assuming ghosts are physical objects in the shared world, so they kill everyone.)
         let hitGhost = false;
         for (const ghost of ghosts) {
             for (const seg of ghost.body) {
