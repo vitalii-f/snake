@@ -38,15 +38,10 @@ let sessionHighScore = 0;
 let sessionBestPlayer = '';
 
 // Profile Display
-const profileDiv = document.createElement('div');
-profileDiv.id = 'profile-display';
-profileDiv.style.position = 'absolute';
-profileDiv.style.top = '10px';
-profileDiv.style.left = '10px';
-profileDiv.style.color = 'white';
-profileDiv.style.fontFamily = 'monospace';
-profileDiv.style.textAlign = 'left';
-document.body.appendChild(profileDiv);
+// const profileDiv = document.createElement('div');
+// profileDiv.id = 'profile-display';
+// ... (code removed) ...
+// Instead we user #profile-card defined in HTML
 
 
 ws.onopen = () => {
@@ -129,14 +124,17 @@ ws.onmessage = (event) => {
 
 function updateProfile() {
     const myPlayer = players.find(p => p.name === savedNickname);
-    if (myPlayer) {
-        profileDiv.innerHTML = `
-            <h3>${myPlayer.name}</h3>
-            <div>Level: ${myPlayer.level || 1}</div>
-            <div>XP: ${myPlayer.xp || 0}</div>
-            <div>Best: ${myPlayer.bestScore || 0}</div>
-        `;
-    }
+    if (!myPlayer) return;
+
+    const pName = document.getElementById('p-name');
+    const pLevel = document.getElementById('p-level');
+    const pXp = document.getElementById('p-xp');
+    const pBest = document.getElementById('p-best');
+
+    if (pName) pName.textContent = myPlayer.name;
+    if (pLevel) pLevel.textContent = myPlayer.level || 1;
+    if (pXp) pXp.textContent = myPlayer.xp || 0;
+    if (pBest) pBest.textContent = myPlayer.bestScore || 0;
 }
 
 // Render Loop
