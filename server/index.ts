@@ -335,6 +335,31 @@ try {
                         }
                     }
 
+                    // Enforce Unique Color
+                    const usedColors = new Set(Array.from(players.values())
+                        .filter(p => p.id !== player.id) // Exclude self
+                        .map(p => p.color)
+                    );
+
+                    if (usedColors.has(player.color)) {
+                        // Color taken, find a new random one
+                        // Reuse getRandomColor helper or just generic random hex
+                        // But getRandomColor pulls from a small list `COLORS`.
+                        // Let's try 10 times to find a random random hex that isn't taken.
+                        let uniqueFound = false;
+                        for (let i = 0; i < 20; i++) {
+                            // Generate random nice neon color? Or just random hex.
+                            // Let's use simple random hex for fallback.
+                            const randomColor = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0').toUpperCase();
+                            if (!usedColors.has(randomColor)) {
+                                player.color = randomColor;
+                                uniqueFound = true;
+                                break;
+                            }
+                        }
+                        // If still failed (astronomical odds), well, they share a color.
+                    }
+
                     // Load/Create from DB
                     try {
                         const dbPlayer = await prisma.player.upsert({
