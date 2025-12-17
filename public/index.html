@@ -23,8 +23,28 @@
             </div>
 
             <button id="start-btn" class="menu-btn primary">START GAME</button>
-            <button id="start-rewind-btn" class="menu-btn"
-                style="border-color: #f0f; color: #f0f; margin-top: 10px;">TIME REWIND MODE</button>
+            <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                <button id="start-rewind-btn" class="menu-btn"
+                    style="border-color: #f0f; color: #f0f; flex-grow: 1;">TIME REWIND MODE</button>
+                <button id="rewind-help-btn" class="menu-btn"
+                    style="width: 40px; border-color: #f0f; color: #f0f;">?</button>
+            </div>
+
+            <!-- Rewind Mode Info Modal -->
+            <div id="rewind-info-modal" class="modal hidden">
+                <div class="modal-content" style="border: 2px solid #f0f;">
+                    <h2 style="color: #f0f; text-shadow: 0 0 10px #f0f;">TIME REWIND MODE</h2>
+                    <p><strong>CONCEPT:</strong> Time is your weapon. Rewind the world to save yourself or trap enemies.
+                    </p>
+                    <ul style="text-align: left; margin: 15px 0;">
+                        <li><strong>REWIND:</strong> Press <code>SPACE</code> to go back 3 seconds.</li>
+                        <li><strong>COST:</strong> Requires & consumes <strong>2 tail segments</strong>.</li>
+                        <li><strong>GHOSTS:</strong> Your past timeline creates a <strong>Ghost Snake</strong>. Touching
+                            it is instant death!</li>
+                    </ul>
+                    <button id="close-info-btn" class="menu-btn" style="border-color: #f0f;">GOT IT</button>
+                </div>
+            </div>
 
             <div class="secondary-buttons">
                 <button class="menu-btn disabled">PROFILE</button>
@@ -114,6 +134,20 @@
                 });
 
                 const startRewindBtn = document.getElementById('start-rewind-btn');
+                const rewindHelpBtn = document.getElementById('rewind-help-btn');
+                const rewindInfoModal = document.getElementById('rewind-info-modal');
+                const closeInfoBtn = document.getElementById('close-info-btn');
+
+                if (rewindHelpBtn) {
+                    rewindHelpBtn.addEventListener('click', () => {
+                        rewindInfoModal.classList.remove('hidden');
+                    });
+                }
+                if (closeInfoBtn) {
+                    closeInfoBtn.addEventListener('click', () => {
+                        rewindInfoModal.classList.add('hidden');
+                    });
+                }
 
                 function startGame(mode = 'standard') {
                     const nickname = nicknameInput.value.trim();

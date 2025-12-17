@@ -197,6 +197,11 @@ ws.onopen = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const gameMode = urlParams.get('mode') || 'standard';
 
+        if (gameMode === 'rewind') {
+            const hint = document.getElementById('rewind-controls-hint');
+            if (hint) hint.style.display = 'flex';
+        }
+
         ws.send(JSON.stringify({
             type: 'join',
             name: savedNickname,
