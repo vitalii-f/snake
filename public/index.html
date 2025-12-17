@@ -20,12 +20,16 @@
 
             <div class="color-picker" id="color-picker-container"
                 style="flex-direction: column; align-items: center; gap: 10px;">
-                <canvas id="color-wheel" width="150" height="150"
-                    style="border-radius: 50%; cursor: crosshair; box-shadow: 0 0 15px rgba(0,0,0,0.5);"></canvas>
-                <div id="selected-color-preview"
-                    style="width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 10px rgba(0,0,0,0.5);">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <div id="selected-color-preview"
+                        style="width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 10px rgba(0,0,0,0.5);">
+                    </div>
+                    <button id="toggle-color-picker-btn" class="menu-btn" style="padding: 5px 10px; font-size: 0.9rem;">
+                        Выберите цвет
+                    </button>
                 </div>
-                <div style="font-size: 0.8rem; color: #888;">Выберите цвет</div>
+                <canvas id="color-wheel" width="150" height="150" class="hidden"
+                    style="border-radius: 50%; cursor: crosshair; box-shadow: 0 0 15px rgba(0,0,0,0.5); margin-top: 10px;"></canvas>
             </div>
 
             <button id="start-btn" class="menu-btn primary">START GAME</button>
@@ -124,9 +128,15 @@
                 const canvas = document.getElementById('color-wheel');
                 const ctx = canvas.getContext('2d');
                 const preview = document.getElementById('selected-color-preview');
+                const toggleBtn = document.getElementById('toggle-color-picker-btn');
                 const centerX = canvas.width / 2;
                 const centerY = canvas.height / 2;
                 const radius = canvas.width / 2;
+
+                // Toggle visibility
+                toggleBtn.addEventListener('click', () => {
+                    canvas.classList.toggle('hidden');
+                });
 
                 // Draw Wheel
                 function drawWheel() {
@@ -143,9 +153,6 @@
                     ctx.beginPath();
                     ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
                     ctx.fill();
-
-                    // Inner white/black radial to make it "Photoshop-like" (optional, but requested simple wheel)
-                    // Let's keep just hue for Neon style flexibility.
                 }
                 drawWheel();
 
@@ -196,6 +203,9 @@
                     preview.style.backgroundColor = selectedColor;
                     preview.style.boxShadow = `0 0 15px ${selectedColor}`;
                     localStorage.setItem('snake_color', selectedColor);
+
+                    // HIDE CANVAS AFTER SELECTION
+                    canvas.classList.add('hidden');
                 });
 
                 /* Previous Code: COLORS list... Removed */
