@@ -28,8 +28,8 @@ const MOVE_INTERVAL = 100; // Snake moves every 100ms (10 moves/sec)
 const players = new Map<string, Player>();
 let food: Point = { x: 10, y: 10 };
 
-// Colors for players
-const COLORS = ['#FF0055', '#00FF9D', '#00F3FF', '#FFFF00', '#FF00FF', '#0000FF'];
+// Colors for players (Excluded Food Color #FF0055)
+const COLORS = ['#00FF9D', '#00F3FF', '#FFFF00', '#FF00FF', '#0000FF'];
 
 function getRandomColor() {
     return COLORS[Math.floor(Math.random() * COLORS.length)];
@@ -147,6 +147,7 @@ try {
         websocket: {
             open(ws) {
                 const id = crypto.randomUUID();
+                // Color will be set on join, or random fallback
                 const color = getRandomColor();
 
                 const player: Player = {
@@ -182,6 +183,11 @@ try {
                 if (data.type === 'join') {
                     const name = data.name || 'Guest';
                     player.name = name;
+
+                    // Set color if valid and not food color
+                    if (data.color && COLORS.includes(data.color)) {
+                        player.color = data.color;
+                    }
 
                     // Load/Create from DB
                     try {

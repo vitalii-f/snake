@@ -254,6 +254,33 @@ p {
     box-shadow: 0 0 20px rgba(255, 0, 85, 0.4);
 }
 
+.color-picker {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.color-option {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.color-option:hover {
+    transform: scale(1.2);
+}
+
+.color-option.selected {
+    border-color: white;
+    box-shadow: 0 0 15px currentColor;
+    transform: scale(1.2);
+}
+
 /* Login Form */
 .login-form {
     display: flex;
@@ -318,7 +345,7 @@ p {
 
     /* Fixed Top-Left Positioning */
     position: fixed;
-    top: 20px;
+    top: 120px;
     left: 20px;
     z-index: 100;
 }

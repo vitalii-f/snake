@@ -173,7 +173,8 @@ if (!savedNickname) {
 
 ws.onopen = () => {
     if (savedNickname) {
-        ws.send(JSON.stringify({ type: 'join', name: savedNickname }));
+        const savedColor = localStorage.getItem('snake_color');
+        ws.send(JSON.stringify({ type: 'join', name: savedNickname, color: savedColor }));
         isGameActive = true;
     }
 };

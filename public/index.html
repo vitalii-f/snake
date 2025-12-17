@@ -18,6 +18,10 @@
                 <input type="text" id="nickname-input" placeholder="Enter Nickname" maxlength="10">
             </div>
 
+            <div class="color-picker" id="color-picker-container">
+                <!-- Colors injected by JS -->
+            </div>
+
             <button id="start-btn" class="menu-btn primary">START GAME</button>
 
             <div class="secondary-buttons">
@@ -84,6 +88,37 @@
                         return;
                     }
                     localStorage.setItem('snake_nickname', nickname);
+                    window.location.href = '/game';
+                }
+
+                const colorPickerContainer = document.getElementById('color-picker-container');
+                const COLORS = ['#00FF9D', '#00F3FF', '#FFFF00', '#FF00FF', '#0000FF']; // Excluded Red (#FF0055)
+                let selectedColor = localStorage.getItem('snake_color') || COLORS[0];
+
+                COLORS.forEach(color => {
+                    const div = document.createElement('div');
+                    div.className = 'color-option';
+                    div.style.backgroundColor = color;
+                    div.style.color = color; // For box-shadow inheritance
+                    if (color === selectedColor) div.classList.add('selected');
+
+                    div.addEventListener('click', () => {
+                        document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
+                        div.classList.add('selected');
+                        selectedColor = color;
+                        localStorage.setItem('snake_color', color);
+                    });
+                    colorPickerContainer.appendChild(div);
+                });
+
+                function startGame() {
+                    const nickname = nicknameInput.value.trim();
+                    if (!nickname) {
+                        alert('Please enter a nickname');
+                        return;
+                    }
+                    localStorage.setItem('snake_nickname', nickname);
+                    localStorage.setItem('snake_color', selectedColor);
                     window.location.href = '/game';
                 }
 
